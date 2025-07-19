@@ -1,1 +1,26 @@
-<img width="1179" height="2373" alt="IMG_8936" src="https://github.com/user-attachments/assets/16f22ce3-7fc5-4dca-8abc-550b12fe042c" />
+## 📊 모바일 KPI 대시보드 개선
+
+### 🔴 As-Is (기존 문제점)
+- **수동 계산**: 영업사원이 PC에서 Excel로 KPI를 일일히 계산
+- **실시간 확인 불가**: 외근 중 성과 확인을 위해 사무실 복귀 필요
+- **데이터 분산**: 영업 실적, 목표치, 달성률이 각각 다른 시스템에 산재
+- **시간 낭비**: 일일 평균 30분 이상 KPI 계산 및 보고서 작성에 소요
+- **부정확한 데이터**: 수동 입력으로 인한 오류 발생 및 실시간 동기화 부재
+
+### 🟢 To-Be (개선 솔루션)
+**LWC 기반 모바일 KPI 대시보드 구현-**
+**Apex를 이용해 실시간 대응 가능**
+
+<div align="center">
+
+| 메인 대시보드 | 상세 KPI 화면 |
+|:---:|:---:|
+| <img width="400" alt="모바일 KPI 메인화면" src="https://github.com/user-attachments/assets/16f22ce3-7fc5-4dca-8abc-550b12fe042c" /> | <img width="400" alt="사원별 KPI 상세" src="https://github.com/user-attachments/assets/e084bd8f-b770-41ea-85ef-6e1465e96e90" /> |
+| 사원별 KPI와 이달 목표 한눈에 확인 | 개인 성과 및 팀 순위 실시간 조회 |
+
+</div>
+
+### ✨ 주요 개선 효과
+- **실시간 데이터**: Salesforce 데이터와 자동 동기화
+- **모바일 최적화**: 언제 어디서나 KPI 확인 가능
+- **시각적 인사이트**: 그래프와 차트로 직관적 성과 파악
