@@ -1,95 +1,140 @@
 <template>
-    <div class="dashboard-container slds-var-p-around_small">
-        <!-- 메인 헤더 -->
-        <div class="header">
-            <h1 class="main-title">영업사원 KPI</h1>
+  <div class="dashboard-container slds-var-p-around_small">
+    <!-- 메인 헤더 -->
+    <div class="header">
+      <h1 class="main-title">영업사원 KPI</h1>
+      <template if:true={selectedSalesRep}>
+        <p class="selected-rep-info">선택된 영업사원: {selectedSalesRepName}</p>
+      </template>
+      <template if:false={selectedSalesRep}>
+        <p class="selected-rep-info">전체 영업사원 보기</p>
+      </template>
+    </div>
+
+    <!-- 로딩 스피너 -->
+    <template if:true={isLoading}>
+      <lightning-spinner
+        alternative-text="Loading"
+        size="medium"
+      ></lightning-spinner>
+    </template>
+
+    <template if:false={isLoading}>
+      <!-- 1. 기본 대시보드 화면 -->
+      <template if:false={selectedStage}>
+        <!-- 영업사원 선택 드롭다운 -->
+        <div class="slds-m-bottom_large">
+          <div class="section-title-container">
+            <h2 class="section-title">영업사원 선택</h2>
+          </div>
+          <lightning-combobox
+            name="salesRep"
+            label="영업사원"
+            value={selectedSalesRep}
+            placeholder="영업사원을 선택하세요"
+            options={salesRepOptions}
+            onchange={handleSalesRepChange}
+            class="slds-m-bottom_medium"
+          >
+          </lightning-combobox>
         </div>
 
-        <!-- 로딩 스피너 -->
-        <template if:true={isLoading}>
-            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
-        </template>
+        <!-- 목표 달성 현황 섹션 -->
+        <div class="slds-m-bottom_large">
+          <div class="section-title-container">
+            <h2 class="section-title">이번 달 목표 달성 현황</h2>
+            <p class="section-subtitle">(건수 기준)</p>
+          </div>
+          <div class="goal-card">
+            <div class="goal-progress-circle">
+              <span class="goal-percentage">{formattedAchievementRate}%</span>
+            </div>
+            <div class="goal-details">
+              <p class="goal-text">목표 {goalCount}건 / 달성 {actualCount}건</p>
+            </div>
+          </div>
+        </div>
 
-        <template if:false={isLoading}>
-            <!-- 1. 기본 대시보드 화면 -->
-            <template if:false={selectedStage}>
-                <!-- 목표 달성 현황 섹션 -->
-                <div class="slds-m-bottom_large">
-                    <div class="section-title-container">
-                        <h2 class="section-title">이번 달 목표 달성 현황</h2>
-                        <p class="section-subtitle">(건수 기준)</p>
-                    </div>
-                    <div class="goal-card">
-                        <div class="goal-progress-circle" style={goalCircleStyle}>
-                            <span class="goal-percentage">{formattedAchievementRate}%</span>
-                        </div>
-                        <div class="goal-details">
-                            <p class="goal-text">목표 {goalCount}건 / 달성 {actualCount}건</p>
-                        </div>
-                    </div>
+        <!-- 단계별 기회 현황 섹션 -->
+        <div>
+          <div class="section-title-container">
+            <h2 class="section-title">단계별 기회 현황</h2>
+          </div>
+          <template for:each={funnelData} for:item="step">
+            <div
+              key={step.stageName}
+              class="funnel-step-card"
+              data-stage={step.stageName}
+              onclick={handleStageClick}
+            >
+              <div class="stage-info">
+                <span class="stage-name">{step.stageName}</span>
+                <span class="opp-count">{step.oppCount} 건</span>
+              </div>
+              <!-- [수정] if:true 조건을 새로운 boolean 속성으로 변경 -->
+              <template if:true={step.hasConversionRate}>
+                <div class="conversion-info">
+                  <lightning-icon
+                    icon-name="utility:arrow_right"
+                    size="x-small"
+                    class="arrow-icon"
+                  ></lightning-icon>
+                  <span class="conversion-rate"
+                    >{step.formattedConversionRate}% 전환</span
+                  >
                 </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </template>
 
-                <!-- 단계별 기회 현황 섹션 -->
-                <div>
-                    <div class="section-title-container">
-                        <h2 class="section-title">단계별 기회 현황</h2>
-                    </div>
-                    <template for:each={funnelData} for:item="step">
-                        <div key={step.stageName} class="funnel-step-card" data-stage={step.stageName} onclick={handleStageClick}>
-                            <div class="stage-info">
-                                <span class="stage-name">{step.stageName}</span>
-                                <span class="opp-count">{step.oppCount} 건</span>
-                            </div>
-                            <!-- [수정] if:true 조건을 새로운 boolean 속성으로 변경 -->
-                            <template if:true={step.hasConversionRate}>
-                                <div class="conversion-info">
-                                    <lightning-icon icon-name="utility:arrow_right" size="x-small" class="arrow-icon"></lightning-icon>
-                                    <span class="conversion-rate">{step.formattedConversionRate}% 전환</span>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-                </div>
+      <!-- 2. 기회 목록 화면 -->
+      <template if:true={selectedStage}>
+        <div class="opportunity-list-container">
+          <!-- 뒤로가기 버튼과 제목 -->
+          <div class="list-header">
+            <button class="back-button" onclick={handleBackClick}>
+              <lightning-icon
+                icon-name="utility:chevronleft"
+                size="small"
+                class="back-icon"
+              ></lightning-icon>
+              뒤로
+            </button>
+            <h2 class="section-title">{selectedStage} 단계의 기회 목록</h2>
+          </div>
+
+          <!-- 기회 목록 데이터 테이블 -->
+          <template if:true={opportunities}>
+            <lightning-datatable
+              key-field="Id"
+              data={opportunities}
+              columns={opportunityColumns}
+              hide-checkbox-column="true"
+              show-row-number-column="false"
+            >
+            </lightning-datatable>
+          </template>
+
+          <!-- 목록 로딩 중 스피너 -->
+          <template if:true={isOppLoading}>
+            <lightning-spinner
+              alternative-text="Loading Opportunities"
+              size="medium"
+            ></lightning-spinner>
+          </template>
+
+          <!-- 데이터가 없을 경우 메시지 -->
+          <template if:false={isOppLoading}>
+            <template if:false={hasOpportunities}>
+              <div class="slds-text-align_center slds-var-p-around_medium">
+                이 단계에는 표시할 기회가 없습니다.
+              </div>
             </template>
-
-            <!-- 2. 기회 목록 화면 -->
-            <template if:true={selectedStage}>
-                <div class="opportunity-list-container">
-                    <!-- 뒤로가기 버튼과 제목 -->
-                    <div class="list-header">
-                        <button class="back-button" onclick={handleBackClick}>
-                            <lightning-icon icon-name="utility:chevronleft" size="small" class="back-icon"></lightning-icon>
-                            뒤로
-                        </button>
-                        <h2 class="section-title">{selectedStage} 단계의 기회 목록</h2>
-                    </div>
-
-                    <!-- 기회 목록 데이터 테이블 -->
-                    <template if:true={opportunities}>
-                        <lightning-datatable
-                            key-field="Id"
-                            data={opportunities}
-                            columns={opportunityColumns}
-                            hide-checkbox-column="true"
-                            show-row-number-column="false">
-                        </lightning-datatable>
-                    </template>
-
-                    <!-- 목록 로딩 중 스피너 -->
-                    <template if:true={isOppLoading}>
-                        <lightning-spinner alternative-text="Loading Opportunities" size="medium"></lightning-spinner>
-                    </template>
-
-                     <!-- 데이터가 없을 경우 메시지 -->
-                    <template if:false={isOppLoading}>
-                        <template if:false={hasOpportunities}>
-                             <div class="slds-text-align_center slds-var-p-around_medium">
-                                 이 단계에는 표시할 기회가 없습니다.
-                             </div>
-                        </template>
-                    </template>
-                </div>
-            </template>
-        </template>
-    </div>
+          </template>
+        </div>
+      </template>
+    </template>
+  </div>
 </template>
