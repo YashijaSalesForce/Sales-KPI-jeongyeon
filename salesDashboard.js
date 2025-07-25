@@ -116,6 +116,45 @@ export default class SalesDashboard extends NavigationMixin(LightningElement) {
     return rate.toFixed(1);
   }
 
+  // 주간 목표 관련 getter들
+  get weeklyGoal() {
+    const data = this.currentSalesRepData;
+    return data?.goalInfo?.weeklyGoal || 0;
+  }
+
+  get weeklyActual() {
+    const data = this.currentSalesRepData;
+    return data?.goalInfo?.weeklyActual || 0;
+  }
+
+  get formattedWeeklyAchievementRate() {
+    const data = this.currentSalesRepData;
+    const rate = data?.goalInfo?.weeklyAchievementRate || 0;
+    return rate.toFixed(1);
+  }
+
+  get currentWeekOfMonth() {
+    const data = this.currentSalesRepData;
+    return data?.goalInfo?.currentWeekOfMonth || 1;
+  }
+
+  // 일일 평균 필요 성과 관련 getter들
+  get formattedDailyRequiredAverage() {
+    const data = this.currentSalesRepData;
+    const average = data?.goalInfo?.dailyRequiredAverage || 0;
+    return average.toFixed(1);
+  }
+
+  get remainingWorkDays() {
+    const data = this.currentSalesRepData;
+    return data?.goalInfo?.remainingWorkDays || 0;
+  }
+
+  get remainingGoal() {
+    const data = this.currentSalesRepData;
+    return data?.goalInfo?.remainingGoal || 0;
+  }
+
   // [수정] 전환율 표시 로직 전체 수정
   get funnelData() {
     const data = this.currentSalesRepData;
