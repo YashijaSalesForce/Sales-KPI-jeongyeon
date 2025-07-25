@@ -42,15 +42,67 @@
         <!-- 목표 달성 현황 섹션 -->
         <div class="slds-m-bottom_large">
           <div class="section-title-container">
-            <h2 class="section-title">이번 달 목표 달성 현황</h2>
+            <h2 class="section-title">목표 달성 현황</h2>
             <p class="section-subtitle">(건수 기준)</p>
           </div>
-          <div class="goal-card">
+
+          <!-- 월 목표 달성률 -->
+          <div class="goal-card slds-m-bottom_medium">
             <div class="goal-progress-circle">
               <span class="goal-percentage">{formattedAchievementRate}%</span>
             </div>
             <div class="goal-details">
-              <p class="goal-text">목표 {goalCount}건 / 달성 {actualCount}건</p>
+              <p class="goal-text">
+                <strong>월 목표:</strong> {goalCount}건 / 달성: {actualCount}건
+              </p>
+            </div>
+          </div>
+
+          <!-- KPI 카드들 -->
+          <div class="kpi-cards-container">
+            <!-- 주간 목표 달성률 카드 -->
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <lightning-icon
+                  icon-name="utility:clock"
+                  size="small"
+                  class="kpi-icon"
+                >
+                </lightning-icon>
+                <h3 class="kpi-title">
+                  이번 주 목표 ({currentWeekOfMonth}주차)
+                </h3>
+              </div>
+              <div class="kpi-content">
+                <div class="kpi-main-value">
+                  {formattedWeeklyAchievementRate}%
+                </div>
+                <div class="kpi-details">
+                  목표: {weeklyGoal}건 / 달성: {weeklyActual}건
+                </div>
+              </div>
+            </div>
+
+            <!-- 일일 평균 필요 성과 카드 -->
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <lightning-icon
+                  icon-name="utility:target"
+                  size="small"
+                  class="kpi-icon"
+                >
+                </lightning-icon>
+                <h3 class="kpi-title">일일 평균 필요 성과</h3>
+              </div>
+              <div class="kpi-content">
+                <div class="kpi-main-value">
+                  {formattedDailyRequiredAverage}건/일
+                </div>
+                <div class="kpi-details">
+                  남은 목표: {remainingGoal}건 / 남은 근무일:
+                  {remainingWorkDays}일
+                </div>
+              </div>
             </div>
           </div>
         </div>
