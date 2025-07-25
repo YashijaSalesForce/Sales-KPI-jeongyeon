@@ -15,6 +15,24 @@ public with sharing class SalesDashboardController {
     public Integer actualCount { get; set; }
     @AuraEnabled
     public Double achievementRate { get; set; }
+
+    // 주간 목표 관련 필드
+    @AuraEnabled
+    public Integer weeklyGoal { get; set; }
+    @AuraEnabled
+    public Integer weeklyActual { get; set; }
+    @AuraEnabled
+    public Double weeklyAchievementRate { get; set; }
+    @AuraEnabled
+    public Integer currentWeekOfMonth { get; set; }
+
+    // 일일 평균 필요 성과
+    @AuraEnabled
+    public Double dailyRequiredAverage { get; set; }
+    @AuraEnabled
+    public Integer remainingWorkDays { get; set; }
+    @AuraEnabled
+    public Integer remainingGoal { get; set; }
   }
   public class FunnelStep {
     @AuraEnabled
@@ -78,6 +96,7 @@ public with sharing class SalesDashboardController {
   /**
    * [수정됨] 이번 달 목표 달성률을 계산합니다.
    * Sales_Goal__c 레코드가 없으면 기본 목표를 10으로 설정합니다.
+   * 주간 목표 달성률과 일일 평균 필요 성과도 함께 계산합니다.
    */
   private static GoalData calculateGoalAchievement(Id userId) {
     GoalData goalData = new GoalData();
@@ -116,6 +135,9 @@ public with sharing class SalesDashboardController {
     } else {
       goalData.achievementRate = 0.0;
     }
+
+    // 주간 목표 및 일일 평균 계산
+    calculateWeeklyAndDailyGoals(goalData, userId);
 
     return goalData;
   }
@@ -213,5 +235,92 @@ public with sharing class SalesDashboardController {
     }
 
     return salesReps;
+  }
+
+  /**
+   * 주간 목표 달성률과 일일 평균 필요 성과를 계산합니다.
+   */
+  private static void calculateWeeklyAndDailyGoals(
+    GoalData goalData,
+    Id userId
+  ) {
+    Date today = Date.today();
+    Date firstDayOfMonth = today.toStartOfMonth();
+
+    // 현재 월의 몇 번째 주인지 계산
+    Integer dayOfMonth = today.day();
+    goalData.currentWeekOfMonth = (dayOfMonth - 1) / 7 + 1;
+
+    // 이번 달 총 주차 수 계산 (대략적으로 4주로 설정)
+    Integer totalWeeksInMonth = 4;
+
+    // 주간 목표 계산 (월 목표를 주차별로 분할)
+    goalData.weeklyGoal = (Integer) Math.ceil(
+      (Double) goalData.goalCount / totalWeeksInMonth
+    );
+
+    // 이번 주에 달성한 실적 계산 (이번 주 시작일부터 오늘까지)
+    Date startOfWeek = today.toStartOfWeek();
+    AggregateResult[] weeklyClosedWon = [
+      SELECT COUNT(Id) cnt
+      FROM Opportunity
+      WHERE
+        OwnerId = :userId
+        AND StageName = 'Closed Won'
+        AND CloseDate >= :startOfWeek
+        AND CloseDate <= :today
+    ];
+    goalData.weeklyActual = (Integer) weeklyClosedWon[0].get('cnt');
+
+    // 주간 달성률 계산
+    if (goalData.weeklyGoal > 0) {
+      goalData.weeklyAchievementRate =
+        ((Double) goalData.weeklyActual / goalData.weeklyGoal) * 100;
+    } else {
+      goalData.weeklyAchievementRate = 0.0;
+    }
+
+    // 남은 목표 계산
+    goalData.remainingGoal = goalData.goalCount - goalData.actualCount;
+
+    // 이번 달 남은 근무일 계산 (주말 제외)
+    Date lastDayOfMonth = firstDayOfMonth.addMonths(1).addDays(-1);
+    goalData.remainingWorkDays = calculateWorkDays(
+      today.addDays(1),
+      lastDayOfMonth
+    );
+
+    // 일일 평균 필요 성과 계산
+    if (goalData.remainingWorkDays > 0 && goalData.remainingGoal > 0) {
+      goalData.dailyRequiredAverage =
+        (Double) goalData.remainingGoal / goalData.remainingWorkDays;
+    } else {
+      goalData.dailyRequiredAverage = 0.0;
+    }
+  }
+
+  /**
+   * 두 날짜 사이의 근무일(주말 제외) 수를 계산합니다.
+   */
+  private static Integer calculateWorkDays(Date startDate, Date endDate) {
+    Integer workDays = 0;
+    Date currentDate = startDate;
+
+    while (currentDate <= endDate) {
+      // 토요일(6), 일요일(0)을 제외한 평일만 카운트
+      DateTime dt = DateTime.newInstance(
+        currentDate,
+        Time.newInstance(0, 0, 0, 0)
+      );
+      String dayOfWeek = dt.format('u'); // 1=월요일, 7=일요일
+
+      if (dayOfWeek != '6' && dayOfWeek != '7') {
+        // 토요일, 일요일이 아닌 경우
+        workDays++;
+      }
+      currentDate = currentDate.addDays(1);
+    }
+
+    return workDays;
   }
 }
